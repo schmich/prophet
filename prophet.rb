@@ -1,127 +1,170 @@
 require 'nokogiri'
 require 'open-uri'
+require 'mechanize'
+require 'singleton'
+require 'launchy'
+require 'io/console'
 
 class Game
-    attr_accessor :favorite, :spread, :underdog, :total_points, :home_team
-    attr_accessor :raw_favorite, :raw_underdog
+  attr_accessor :favorite, :spread, :underdog, :total_points, :home_team
+  attr_accessor :raw_favorite, :raw_underdog
+  attr_accessor :confidence
 end
 
 class Record
-    def points
-        @win * 2 + @tie
-    end
+  def points
+    @win * 2 + @tie
+  end
 
-    attr_accessor :win, :loss, :tie
+  attr_accessor :win, :loss, :tie
 end
 
 def get_team(name)
-    case name.strip
-        when /washington/i
-            :Washington
-        when /philadelphia/i
-            :Philadelphia
-        when /dallas/i
-            :Dallas
-        when /((n\.?y\.?)|(new york)) giants/i
-            :NyGiants
-        when /detroit/i
-            :Detroit
-        when /green bay/i
-            :GreenBay
-        when /chicago/i
-            :Chicago
-        when /minnesota/i
-            :Minnesota
-        when /new orleans/i
-            :NewOrleans
-        when /tampa bay/i
-            :TampaBay
-        when /atlanta/i
-            :Atlanta
-        when /carolina/i
-            :Carolina
-        when /san francisco/i
-            :SanFrancisco
-        when /arizona/i
-            :Arizona
-        when /st\.? louis/i
-            :StLouis
-        when /seattle/i
-            :Seattle
-        when /new england/i
-            :NewEngland
-        when /((n\.?y\.?)|(new york)) jets/i
-            :NyJets
-        when /buffalo/i
-            :Buffalo
-        when /miami/i
-            :Miami
-        when /cincinnati/i
-            :Cincinnati
-        when /baltimore/i
-            :Baltimore
-        when /cleveland/i
-            :Cleveland
-        when /pittsburgh/i
-            :Pittsburgh
-        when /houston/i
-            :Houston
-        when /jacksonville/i
-            :Jacksonville
-        when /tennessee/i
-            :Tennessee
-        when /indianapolis/i
-            :Indianapolis
-        when /oakland/i
-            :Oakland
-        when /san diego/i
-            :SanDiego
-        when /denver/i
-            :Denver
-        when /kansas city/i
-            :KansasCity
-        else
-            raise "Unknown team: #{name}."
-    end
+  case name.strip
+    when /washington/i
+      :Washington
+    when /philadelphia/i
+      :Philadelphia
+    when /dallas/i
+      :Dallas
+    when /((n\.?y\.?)|(new york)) giants/i
+      :NyGiants
+    when /detroit/i
+      :Detroit
+    when /green bay/i
+      :GreenBay
+    when /chicago/i
+      :Chicago
+    when /minnesota/i
+      :Minnesota
+    when /new orleans/i
+      :NewOrleans
+    when /tampa bay/i
+      :TampaBay
+    when /atlanta/i
+      :Atlanta
+    when /carolina/i
+      :Carolina
+    when /san francisco/i
+      :SanFrancisco
+    when /arizona/i
+      :Arizona
+    when /st\.? louis/i
+      :StLouis
+    when /seattle/i
+      :Seattle
+    when /new england/i
+      :NewEngland
+    when /((n\.?y\.?)|(new york)) jets/i
+      :NyJets
+    when /buffalo/i
+      :Buffalo
+    when /miami/i
+      :Miami
+    when /cincinnati/i
+      :Cincinnati
+    when /baltimore/i
+      :Baltimore
+    when /cleveland/i
+      :Cleveland
+    when /pittsburgh/i
+      :Pittsburgh
+    when /houston/i
+      :Houston
+    when /jacksonville/i
+      :Jacksonville
+    when /tennessee/i
+      :Tennessee
+    when /indianapolis/i
+      :Indianapolis
+    when /oakland/i
+      :Oakland
+    when /san diego/i
+      :SanDiego
+    when /denver/i
+      :Denver
+    when /kansas city/i
+      :KansasCity
+    else
+      raise "Unknown team: #{name}."
+  end
+end
+
+def ryp_team_id(team)
+  teams = [
+    :Buffalo,
+    :Indianapolis,
+    :Miami,
+    :NewEngland,
+    :NyJets,
+    :Cincinnatti,
+    :Cleveland,
+    :Tennessee,
+    :Pittsburgh,
+    :Denver,
+    :KansasCity,
+    :Oakland,
+    :SanDiego,
+    :Seattle,
+    :Dallas,
+    :NyGiants,
+    :Philadelphia,
+    :Arizona,
+    :Washington,
+    :Chicago,
+    :Detroit,
+    :GreenBay,
+    :Minnesota,
+    :TampaBay,
+    :Atlanta,
+    :StLouis,
+    :NewOrleans,
+    :SanFrancisco,
+    :Carolina,
+    :Jacksonville,
+    :Baltimore,
+    :Houston
+  ]
+  teams.index(team) + 1
 end
 
 def make_game(values)
-    game = Game.new
-    game.raw_favorite = values[1].inner_text.strip.gsub /[\r\n]/, ' '
-    game.favorite = get_team(game.raw_favorite.gsub /^At /, '')
-    game.spread = values[2].inner_text.to_f
-    game.raw_underdog = values[3].inner_text.strip.gsub /[\r\n]/, ' '
-    game.underdog = get_team(game.raw_underdog.gsub /^At /, '')
-    game.total_points = values[4].inner_text.to_f
-    game.home_team = (values[1].inner_text =~ /^At / ? game.favorite : game.underdog)
-    return game
+  game = Game.new
+  game.raw_favorite = values[1].inner_text.strip.gsub /[\r\n]/, ' '
+  game.favorite = get_team(game.raw_favorite.gsub /^At /, '')
+  game.spread = values[2].inner_text.to_f
+  game.raw_underdog = values[3].inner_text.strip.gsub /[\r\n]/, ' '
+  game.underdog = get_team(game.raw_underdog.gsub /^At /, '')
+  game.total_points = values[4].inner_text.to_f
+  game.home_team = (values[1].inner_text =~ /^At / ? game.favorite : game.underdog)
+  return game
 end
 
 def make_record(values)
-    record = Record.new
-    record.win = values[1].inner_text.to_i
-    record.loss = values[2].inner_text.to_i
-    record.tie = values[3].inner_text.to_i
-    return record
+  record = Record.new
+  record.win = values[1].inner_text.to_i
+  record.loss = values[2].inner_text.to_i
+  record.tie = values[3].inner_text.to_i
+  return record
 end
 
 def game_sort(p, q, records)
-    spread = p.spread <=> q.spread
-    return spread if spread != 0
+  spread = p.spread <=> q.spread
+  return spread if spread != 0
 
-    return -1 if p.favorite == p.home_team
-    return 1 if q.favorite == q.home_team
+  return -1 if p.favorite == p.home_team
+  return 1 if q.favorite == q.home_team
 
-    p_record_spread = records[p.favorite].points - records[p.underdog].points
-    q_record_spread = records[q.favorite].points - records[q.underdog].points
+  p_record_spread = records[p.favorite].points - records[p.underdog].points
+  q_record_spread = records[q.favorite].points - records[q.underdog].points
 
-    record_spread = q_record_spread <=> p_record_spread
-    return record_spread if record_spread != 0
+  record_spread = q_record_spread <=> p_record_spread
+  return record_spread if record_spread != 0
 
-    point_spread = records[q.favorite].points <=> records[p.favorite].points
-    return point_spread if point_spread != 0
+  point_spread = records[q.favorite].points <=> records[p.favorite].points
+  return point_spread if point_spread != 0
 
-    return 0
+  return 0
 end
 
 lines_doc = Nokogiri::HTML(open('http://www.footballlocks.com/nfl_lines.shtml'))
@@ -131,14 +174,14 @@ raw_records = records_doc.css('div#my-teams-table table tr').find_all { |e| !/he
 
 records = {}
 raw_records.each { |r|
-    stats = r.css('td')
-    team = get_team(stats[0].inner_text.strip)
+  stats = r.css('td')
+  team = get_team(stats[0].inner_text.strip)
 
-    records[team] = make_record(stats)
+  records[team] = make_record(stats)
 }
 
 records.each { |t, r|
-    puts "#{t}: #{r.win}-#{r.loss}-#{r.tie}"
+  puts "#{t}: #{r.win}-#{r.loss}-#{r.tie}"
 }
 
 puts
@@ -149,30 +192,92 @@ raw_games = raw_games.find_all { |g| g.css('span').count <= 1 }.find_all { |g| g
 
 games = []
 raw_games.each { |g|
-    values = g.css('td')
-    game = make_game(values)
-    games << game
+  values = g.css('td')
+  game = make_game(values)
+  games << game
 }
 
 games.sort! { |p, q|
-    game_sort(p, q, records)
+  game_sort(p, q, records)
 }
 
 games.each { |game|
-    frec = records[game.favorite]
-    urec = records[game.underdog]
-    puts game.favorite if frec.nil?
-    puts game.underdog if urec.nil?
-    puts "#{game.spread} #{game.raw_favorite} (#{frec.win}-#{frec.loss}-#{frec.tie}) > #{game.raw_underdog} (#{urec.win}-#{urec.loss}-#{urec.tie})"
+  fav = records[game.favorite]
+  under = records[game.underdog]
+  puts game.favorite if fav.nil?
+  puts game.underdog if under.nil?
+  puts "#{game.spread} #{game.raw_favorite} (#{fav.win}-#{fav.loss}-#{fav.tie}) > #{game.raw_underdog} (#{under.win}-#{under.loss}-#{under.tie})"
 }
 
 puts
 
 points = 16
 games.each { |game|
-    puts "%2d #{game.favorite}" % points
-    points = points - 1
+  game.confidence = points
+  points -= 1
+}
+
+games.each { |game|
+  puts "%2d #{game.favorite}" % game.confidence
 }
 
 puts
-system('pause')
+
+class Agent < ::Mechanize
+  include Singleton
+
+  def initialize
+    super
+    self.agent.http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+  end
+end
+
+puts 'Enter username and password to update picks.'
+puts
+
+print 'Username: '
+username = gets
+
+print 'Password (hidden): '
+password = $stdin.noecho { |stdin|
+  stdin.gets
+}
+
+puts "\n\nUpdating picks."
+
+agent = Agent.instance
+
+homepage = agent.get('http://www.runyourpool.com')
+homepage.form_with(:action => '/login_process.cfm') do |form|
+  form['username'] = username
+  form['password'] = password
+  dashboard = form.submit
+end
+
+# Maps team ID to the game ID they're playing in this week.
+matches = {}
+
+picks_page = agent.get('http://www.runyourpool.com/confidence/picksheet.cfm')
+
+picks_page.search('#picksheetList li').each { |e|
+  e.search('input[type="radio"]').each { |i|
+    game_id = i['name'].to_i
+    team_id = i['value'].to_i
+    matches[team_id] = game_id
+  }
+}
+
+# Map game ID to the winning team ID and the confidence value.
+picks = Hash[*games.map { |g|
+  team_id = ryp_team_id(g.favorite)
+  [matches[team_id], [team_id, g.confidence]]
+}.flatten(1)].sort_by { |k, v| -v[1] }
+
+query = picks.map { |c| "#{c[0]}=#{c[1][0]}" }.join('&')
+query += '&tiebreak=42&'
+query += picks.map { |c| "#{c[0]}=#{c[1][1]}" }.join('&')
+
+picks_url = "http://www.runyourpool.com/confidence/picksheet_legacy_process.cfm?count=#{picks.length}"
+result = agent.post(picks_url, query, 'Content-Type' => 'application/x-www-form-urlencoded')
+
+Launchy.open('http://www.runyourpool.com/confidence/picksheet.cfm')
