@@ -280,4 +280,4 @@ query += picks.map { |c| "#{c[0]}=#{c[1][1]}" }.join('&')
 picks_url = "http://www.runyourpool.com/confidence/picksheet_legacy_process.cfm?count=#{picks.length}"
 result = agent.post(picks_url, query, 'Content-Type' => 'application/x-www-form-urlencoded')
 
-Launchy.open('http://www.runyourpool.com/confidence/picksheet.cfm')
+Launchy.open('http://www.runyourpool.com/confidence/reports/pick_history.cfm')
