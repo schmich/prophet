@@ -97,7 +97,7 @@ def ryp_team_id(team)
     :Miami,
     :NewEngland,
     :NyJets,
-    :Cincinnatti,
+    :Cincinnati,
     :Cleveland,
     :Tennessee,
     :Pittsburgh,
