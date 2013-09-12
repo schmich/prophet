@@ -273,9 +273,11 @@ picks = Hash[*games.map { |g|
   [matches[team_id], [team_id, g.confidence]]
 }.flatten(1)].sort_by { |k, v| -v[1] }
 
-query = picks.map { |c| "#{c[0]}=#{c[1][0]}" }.join('&')
-query += '&tiebreak=42&'
-query += picks.map { |c| "#{c[0]}=#{c[1][1]}" }.join('&')
+query = [
+  picks.map { |c| "#{c[0]}=#{c[1][0]}" },
+  'tiebreak=42',
+  picks.map { |c| "#{c[0]}=#{c[1][1]}" }
+].flatten.join('&')
 
 picks_url = "http://www.runyourpool.com/confidence/picksheet_legacy_process.cfm?count=#{picks.length}"
 result = agent.post(picks_url, query, 'Content-Type' => 'application/x-www-form-urlencoded')
