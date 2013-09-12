@@ -280,4 +280,17 @@ query += picks.map { |c| "#{c[0]}=#{c[1][1]}" }.join('&')
 picks_url = "http://www.runyourpool.com/confidence/picksheet_legacy_process.cfm?count=#{picks.length}"
 result = agent.post(picks_url, query, 'Content-Type' => 'application/x-www-form-urlencoded')
 
-Launchy.open('http://www.runyourpool.com/confidence/reports/pick_history.cfm')
+page = agent.get('http://www.runyourpool.com/confidence/print_picks.cfm')
+picks_file = File.join(Dir.mktmpdir, 'picks.html')
+
+head = nil
+page.search('//head').each do |e|
+  e.children.first.add_previous_sibling('<base href="http://runyourpool.com">')
+  head = e
+end
+
+File.open(picks_file, 'w+') do |file|
+  file.write(head.document.to_s)
+end
+
+Launchy.open(picks_file)
