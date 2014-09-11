@@ -243,10 +243,11 @@ password = $stdin.noecho { |stdin|
   stdin.gets
 }
 
-puts "\n\nUpdating picks."
+puts "\n\nUpdating picks..."
 
 agent = Agent.instance
 
+puts 'Logging in.'
 homepage = agent.get('http://www.runyourpool.com')
 homepage.form_with(:action => '/login_process.cfm') do |form|
   form['username'] = username
@@ -257,6 +258,7 @@ end
 # Maps team ID to the game ID they're playing in this week.
 matches = {}
 
+puts 'Getting pick sheet.'
 picks_page = agent.get('http://www.runyourpool.com/confidence/picksheet.cfm')
 
 picks_page.search('#picksheetList li').each { |e|
@@ -279,9 +281,11 @@ query = [
   picks.map { |c| "#{c[0]}=#{c[1][1]}" }
 ].flatten.join('&')
 
+puts 'Posting picks.'
 picks_url = "http://www.runyourpool.com/confidence/picksheet_legacy_process.cfm?count=#{picks.length}"
 result = agent.post(picks_url, query, 'Content-Type' => 'application/x-www-form-urlencoded')
 
+puts 'Getting pick review sheet.'
 page = agent.get('http://www.runyourpool.com/confidence/print_picks.cfm')
 picks_file = File.join(Dir.mktmpdir, 'picks.html')
 
@@ -296,3 +300,4 @@ File.open(picks_file, 'w+') do |file|
 end
 
 Launchy.open(picks_file)
+puts 'Fin.'
