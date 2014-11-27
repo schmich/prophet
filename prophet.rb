@@ -23,7 +23,7 @@ def get_team(name)
   case name.strip
     when /washington/i
       :Washington
-    when /philadelphia/i
+    when /philadel?phia/i
       :Philadelphia
     when /dallas/i
       :Dallas
