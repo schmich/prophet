@@ -135,7 +135,7 @@ def make_game(values)
   game.spread = values[2].inner_text.to_f
   game.raw_underdog = values[3].inner_text.strip.gsub /[\r\n]/, ' '
   game.underdog = get_team(game.raw_underdog.gsub /^At /, '')
-  game.total_points = values[4].inner_text.to_f
+  game.total_points = values[4] ? values[4].inner_text.to_f : 0
   game.home_team = (values[1].inner_text =~ /^At / ? game.favorite : game.underdog)
   return game
 end
