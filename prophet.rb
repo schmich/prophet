@@ -2,7 +2,6 @@ require 'nokogiri'
 require 'open-uri'
 require 'mechanize'
 require 'singleton'
-require 'launchy'
 require 'io/console'
 
 class Game
@@ -168,15 +167,13 @@ def game_sort(p, q, records)
 end
 
 lines_doc = Nokogiri::HTML(open('http://www.footballlocks.com/nfl_lines.shtml'))
-records_doc = Nokogiri::HTML(open('http://espn.go.com/nfl/standings'))
+records_doc = Nokogiri::HTML(open('http://www.nfl.com/standings'))
 
-raw_records = records_doc.css('div#my-teams-table table tr').find_all { |e| !/head/.match(e['class']) }
-
+raw_records = records_doc.css('table.data-table1 tr.tbdy1')
 records = {}
 raw_records.each { |r|
   stats = r.css('td')
-  team = get_team(stats[0].inner_text.strip)
-
+  team = get_team(stats[0].inner_text)
   records[team] = make_record(stats)
 }
 
@@ -186,7 +183,9 @@ records.each { |t, r|
 
 puts
 
-tables = lines_doc.css('table[cols="5"]')[0..1]
+tables = lines_doc.css('table[cols="5"]')
+tables = tables[tables.length - 2..tables.length]
+
 raw_games = tables.map { |t| t.css('tr') }.flatten
 raw_games = raw_games.find_all { |g| g.css('span').count <= 1 }.find_all { |g| g.css('td[width]').empty? }
 
@@ -248,45 +247,35 @@ puts "\n\nUpdating picks..."
 agent = Agent.instance
 
 puts 'Logging in.'
-homepage = agent.get('http://www.runyourpool.com')
-homepage.form_with(:action => '/login_process.cfm') do |form|
+homepage = agent.get('https://www.runyourpool.com')
+homepage.form_with(action:/login_process/i) do |form|
   form['username'] = username
   form['password'] = password
-  dashboard = form.submit
+  form.submit
 end
 
 # Maps team ID to the game ID they're playing in this week.
 matches = {}
 
 puts 'Getting pick sheet.'
-picks_page = agent.get('http://www.runyourpool.com/confidence/picksheet.cfm')
+picks_page = agent.get('http://www.runyourpool.com/nfl/confidence/picksheet_legacy.cfm?version=1')
+picks_page.form_with(action: /picksheet_legacy_process/i) do |form|
+  games.each do |g|
+    team_id = ryp_team_id(g.favorite)
+    input = form.radiobutton_with(value: team_id.to_s)
 
-picks_page.search('#picksheetList li').each { |e|
-  e.search('input[type="radio"]').each { |i|
-    game_id = i['name'].to_i
-    team_id = i['value'].to_i
-    matches[team_id] = game_id
-  }
-}
+    game_id = input.name
+    input.check
 
-# Map game ID to the winning team ID and the confidence value.
-picks = Hash[*games.map { |g|
-  team_id = ryp_team_id(g.favorite)
-  [matches[team_id], [team_id, g.confidence]]
-}.flatten(1)].sort_by { |k, v| -v[1] }
+    form.field_with(type: nil, name: game_id.to_s).value = g.confidence
+  end
 
-query = [
-  picks.map { |c| "#{c[0]}=#{c[1][0]}" },
-  'tiebreak=42',
-  picks.map { |c| "#{c[0]}=#{c[1][1]}" }
-].flatten.join('&')
-
-puts 'Posting picks.'
-picks_url = "http://www.runyourpool.com/confidence/picksheet_legacy_process.cfm?count=#{picks.length}"
-result = agent.post(picks_url, query, 'Content-Type' => 'application/x-www-form-urlencoded')
+  form['tiebreak'] = '42'
+  form.submit
+end
 
 puts 'Getting pick review sheet.'
-page = agent.get('http://www.runyourpool.com/confidence/print_picks.cfm')
+page = agent.get('http://www.runyourpool.com/nfl/confidence/print_picks.cfm?sheet_id=1')
 picks_file = File.join(Dir.mktmpdir, 'picks.html')
 
 head = nil
@@ -299,5 +288,6 @@ File.open(picks_file, 'w+') do |file|
   file.write(head.document.to_s)
 end
 
-Launchy.open(picks_file)
+system("start chrome \"#{picks_file}\"")
+
 puts 'Fin.'
