@@ -288,6 +288,10 @@ File.open(picks_file, 'w+') do |file|
   file.write(head.document.to_s)
 end
 
-system("start chrome \"#{picks_file}\"")
+if Gem::Platform.local.os =~ /darwin/i
+  system("open -a \"Google Chrome\" \"#{picks_file}\"")
+else
+  system("start chrome \"#{picks_file}\"")
+end
 
 puts 'Fin.'
