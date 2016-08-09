@@ -208,7 +208,8 @@ games.each { |game|
   puts "#{game.spread} #{game.raw_favorite} (#{fav.win}-#{fav.loss}-#{fav.tie}) > #{game.raw_underdog} (#{under.win}-#{under.loss}-#{under.tie})"
 }
 
-puts
+week = records.values.map { |r| r.win + r.loss + r.tie }.max + 1
+puts "\nWeek: #{week}\n\n"
 
 points = 16
 games.each { |game|
@@ -220,8 +221,6 @@ games.each { |game|
   puts "%2d #{game.favorite}" % game.confidence
 }
 
-puts
-
 class Agent < ::Mechanize
   include Singleton
 
@@ -231,8 +230,7 @@ class Agent < ::Mechanize
   end
 end
 
-puts 'Enter username and password to update picks.'
-puts
+puts "\nEnter username and password to update picks.\n"
 
 print 'Username: '
 username = gets
@@ -275,7 +273,7 @@ picks_page.form_with(action: /picksheet_legacy_process/i) do |form|
 end
 
 puts 'Getting pick review sheet.'
-page = agent.get('http://www.runyourpool.com/nfl/confidence/print_picks.cfm?sheet_id=1')
+page = agent.get("http://www.runyourpool.com/nfl/confidence/print_picks.cfm?sheet_id=1&week=#{week}")
 picks_file = File.join(Dir.mktmpdir, 'picks.html')
 
 head = nil
