@@ -48,8 +48,8 @@ def get_team(name)
       :SanFrancisco
     when /arizona/i
       :Arizona
-    when /st\.? louis/i
-      :StLouis
+    when /((l\.?a\.?)|(los angeles))/i
+      :LosAngeles
     when /seattle/i
       :Seattle
     when /new england/i
@@ -116,7 +116,7 @@ def ryp_team_id(team)
     :Minnesota,
     :TampaBay,
     :Atlanta,
-    :StLouis,
+    :LosAngeles,
     :NewOrleans,
     :SanFrancisco,
     :Carolina,
