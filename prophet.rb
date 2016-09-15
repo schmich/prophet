@@ -48,7 +48,7 @@ def get_team(name)
       :SanFrancisco
     when /arizona/i
       :Arizona
-    when /((l\.?a\.?)|(los angeles))/i
+    when /((l\.a\.)|(los angeles))/i
       :LosAngeles
     when /seattle/i
       :Seattle
@@ -246,7 +246,7 @@ agent = Agent.instance
 
 puts 'Logging in.'
 homepage = agent.get('https://www.runyourpool.com')
-homepage.form_with(action:/login_process/i) do |form|
+homepage.form_with(action: /login_process/i) do |form|
   form['username'] = username
   form['password'] = password
   form.submit
