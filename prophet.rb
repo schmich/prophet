@@ -242,11 +242,11 @@ password = $stdin.noecho { |stdin|
   stdin.gets
 }
 
-puts "\n\nUpdating picks..."
+puts "\n\nUpdate picks."
 
 agent = Agent.instance
 
-puts 'Logging in.'
+puts 'Log in.'
 homepage = agent.get('https://www.runyourpool.com')
 homepage.form_with(action: /login_process/i) do |form|
   form['username'] = username
@@ -257,9 +257,14 @@ end
 # Maps team ID to the game ID they're playing in this week.
 matches = {}
 
-puts 'Getting pick sheet.'
+puts 'Get pick sheet.'
 picks_page = agent.get('http://www.runyourpool.com/nfl/confidence/picksheet_legacy.cfm?version=1')
 picks_page.form_with(action: /picksheet_legacy_process/i) do |form|
+  if !form
+    puts 'Login failed.'
+    exit 1
+  end
+
   games.each do |g|
     team_id = ryp_team_id(g.favorite)
     input = form.radiobutton_with(value: team_id.to_s)
@@ -274,7 +279,7 @@ picks_page.form_with(action: /picksheet_legacy_process/i) do |form|
   form.submit
 end
 
-puts 'Getting pick review sheet.'
+puts 'Get pick review sheet.'
 page = agent.get("http://www.runyourpool.com/nfl/confidence/print_picks.cfm?sheet_id=1&week=#{week}")
 picks_file = File.join(Dir.mktmpdir, 'picks.html')
 
@@ -294,4 +299,4 @@ else
   system("start chrome \"#{picks_file}\"")
 end
 
-puts 'Fin.'
+puts 'Finished.'
