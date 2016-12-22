@@ -210,7 +210,15 @@ games.each { |game|
   puts "#{game.spread} #{game.raw_favorite} (#{fav.win}-#{fav.loss}-#{fav.tie}) > #{game.raw_underdog} (#{under.win}-#{under.loss}-#{under.tie})"
 }
 
-week = records.values.map { |r| r.win + r.loss + r.tie }.max + 1
+if lines_doc.to_s =~ /nfl lines for week (\d+)/i
+  week = $1.to_i
+end
+
+if !week
+  puts "\nCould not find NFL week number."
+  exit
+end
+
 puts "\nWeek: #{week}\n\n"
 
 points = 16
