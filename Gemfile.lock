@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    domain_name (0.5.20161129)
+    domain_name (0.5.20170223)
       unf (>= 0.0.5, < 1.0.0)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
@@ -20,7 +20,7 @@ GEM
     mini_portile2 (2.1.0)
     net-http-digest_auth (1.4.1)
     net-http-persistent (2.9.4)
-    nokogiri (1.7.0.1)
+    nokogiri (1.7.1)
       mini_portile2 (~> 2.1.0)
     ntlm-http (0.1.1)
     unf (0.1.4)
