@@ -50,8 +50,10 @@ def get_team(name)
       :SanFrancisco
     when /arizona/i
       :Arizona
-    when /((l\.a\.)|(los angeles))/i
-      :LosAngeles
+    when /((l\.?a\.?)|(los angeles)) rams/i
+      :LaRams
+    when /((l\.?a\.?)|(los angeles)) chargers/i
+      :LaChargers
     when /seattle/i
       :Seattle
     when /new england/i
@@ -80,8 +82,6 @@ def get_team(name)
       :Indianapolis
     when /oakland/i
       :Oakland
-    when /san diego/i
-      :SanDiego
     when /denver/i
       :Denver
     when /kansas city/i
@@ -92,41 +92,41 @@ def get_team(name)
 end
 
 def ryp_team_id(team)
-  teams = [
-    :Buffalo,
-    :Indianapolis,
-    :Miami,
-    :NewEngland,
-    :NyJets,
-    :Cincinnati,
-    :Cleveland,
-    :Tennessee,
-    :Pittsburgh,
-    :Denver,
-    :KansasCity,
-    :Oakland,
-    :SanDiego,
-    :Seattle,
-    :Dallas,
-    :NyGiants,
-    :Philadelphia,
-    :Arizona,
-    :Washington,
-    :Chicago,
-    :Detroit,
-    :GreenBay,
-    :Minnesota,
-    :TampaBay,
-    :Atlanta,
-    :LosAngeles,
-    :NewOrleans,
-    :SanFrancisco,
-    :Carolina,
-    :Jacksonville,
-    :Baltimore,
-    :Houston
-  ]
-  teams.index(team) + 1
+  ids = {
+    Buffalo: 1,
+    Indianapolis: 2,
+    Miami: 3,
+    NewEngland: 4,
+    NyJets: 5,
+    Cincinnati: 6,
+    Cleveland: 7,
+    Tennessee: 8,
+    Pittsburgh: 9,
+    Denver: 10,
+    KansasCity: 11,
+    Oakland: 12,
+    LaChargers: 13,
+    Seattle: 14,
+    Dallas: 15,
+    NyGiants: 16,
+    Philadelphia: 17,
+    Arizona: 18,
+    Washington: 19,
+    Chicago: 20,
+    Detroit: 21,
+    GreenBay: 22,
+    Minnesota: 23,
+    TampaBay: 24,
+    Atlanta: 25,
+    LaRams: 26,
+    NewOrleans: 27,
+    SanFrancisco: 28,
+    Carolina: 29,
+    Jacksonville: 30,
+    Baltimore: 31,
+    Houston: 32
+  }
+  ids[team] || (raise "Unknown team: #{team}.")
 end
 
 def make_game(values)
