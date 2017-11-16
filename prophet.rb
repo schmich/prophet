@@ -28,37 +28,37 @@ def get_team(name)
       :Philadelphia
     when /dallas/i
       :Dallas
-    when /((n\.?y\.?)|(new york)) giants/i
+    when /((n\.?y\.?)|(new.?york)).?giants/i
       :NyGiants
     when /detroit/i
       :Detroit
-    when /green bay/i
+    when /green.?bay/i
       :GreenBay
     when /chicago/i
       :Chicago
     when /minnesota/i
       :Minnesota
-    when /new orleans/i
+    when /new.?orleans/i
       :NewOrleans
-    when /tampa bay/i
+    when /tampa.?bay/i
       :TampaBay
     when /atlanta/i
       :Atlanta
     when /carolina/i
       :Carolina
-    when /san francisco/i
+    when /san.?francisco/i
       :SanFrancisco
     when /arizona/i
       :Arizona
-    when /((l\.?a\.?)|(los angeles)) rams/i
+    when /((l\.?a\.?)|(los.?angeles)).?rams/i
       :LaRams
-    when /((l\.?a\.?)|(los angeles)) chargers/i
+    when /((l\.?a\.?)|(los.?angeles)).?chargers/i
       :LaChargers
     when /seattle/i
       :Seattle
-    when /new england/i
+    when /new.?england/i
       :NewEngland
-    when /((n\.?y\.?)|(new york)) jets/i
+    when /((n\.?y\.?)|(new.?york)).?jets/i
       :NyJets
     when /buffalo/i
       :Buffalo
@@ -84,7 +84,7 @@ def get_team(name)
       :Oakland
     when /denver/i
       :Denver
-    when /kansas city/i
+    when /kansas.?city/i
       :KansasCity
     else
       raise "Unknown team: #{name}."
@@ -169,13 +169,13 @@ def game_sort(p, q, records)
 end
 
 lines_doc = Nokogiri::HTML(open('http://www.footballlocks.com/nfl_lines.shtml'))
-records_doc = Nokogiri::HTML(open('http://www.nfl.com/standings'))
+records_doc = Nokogiri::HTML(open('http://proxy.espn.com/nfl/standings'))
 
-raw_records = records_doc.css('table.data-table1 tr.tbdy1')
+raw_records = records_doc.css('.tablehead tr[class*="team-"]')
 records = {}
 raw_records.each { |r|
   stats = r.css('td')
-  team = get_team(stats[0].inner_text)
+  team = get_team(stats[0].inner_html)
   records[team] = make_record(stats)
 }
 
