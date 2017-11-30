@@ -20,20 +20,20 @@ GEM
     mini_portile2 (2.3.0)
     net-http-digest_auth (1.4.1)
     net-http-persistent (2.9.4)
-    nokogiri (1.8.1)
+    nokogiri (1.8.1-x64-mingw32)
       mini_portile2 (~> 2.3.0)
     ntlm-http (0.1.1)
     unf (0.1.4)
       unf_ext
-    unf_ext (0.0.7.4)
+    unf_ext (0.0.7.4-x64-mingw32)
     webrobots (0.1.2)
 
 PLATFORMS
-  ruby
+  x64-mingw32
 
 DEPENDENCIES
   mechanize (~> 2.7)
   nokogiri (~> 1.8)
 
 BUNDLED WITH
-   1.15.4
+   1.14.3
