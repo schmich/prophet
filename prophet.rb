@@ -2,9 +2,12 @@
 
 require 'nokogiri'
 require 'open-uri'
+require 'net/http'
 require 'mechanize'
 require 'singleton'
 require 'io/console'
+require 'json'
+require 'date'
 
 class Game
   attr_accessor :favorite, :spread, :underdog, :total_points, :home_team
@@ -141,14 +144,6 @@ def make_game(values)
   return game
 end
 
-def make_record(values)
-  record = Record.new
-  record.win = values[1].inner_text.to_i
-  record.loss = values[2].inner_text.to_i
-  record.tie = values[3].inner_text.to_i
-  return record
-end
-
 def game_sort(p, q, records)
   spread = p.spread <=> q.spread
   return spread if spread != 0
@@ -168,17 +163,56 @@ def game_sort(p, q, records)
   return 0
 end
 
+def get_records_by_season(year:, season_type:)
+  records = {}
+  conferences = ['AFC', 'NFC']
+  divisions = ['North', 'East', 'South', 'West']
+
+  conferences.each do |conference|
+    divisions.each do |division|
+      params = {
+        sort: nil,
+        group: nil,
+        filter: nil,
+        'filters.season': year,
+        'filters.seasontype': season_type,
+        'filters.conference': conference,
+        'filters.division': division
+      }
+
+      response = Net::HTTP.post_form(URI.parse('https://fantasydata.com/NFLTeamStats/Standings_Read'), params)
+      if response.code.to_i != 200
+        raise "Unexpected response: HTTP #{response.code}"
+      end
+
+      stats = JSON.parse(response.body)
+      stats['Data'].each do |team|
+        record = Record.new
+        record.win = team['Wins']
+        record.loss = team['Losses']
+        record.tie = team['Ties']
+        records[get_team(team['Name'])] = record
+      end
+    end
+  end
+
+  records
+end
+
+def get_records
+  # Try regular season first, then preseason.
+  year = DateTime.now.year
+  records = get_records_by_season(year: year, season_type: 2)
+  if records.empty?
+    records = get_records_by_season(year: year, season_type: 1)
+  end
+
+  records
+end
+
 lines_doc = Nokogiri::HTML(open('http://www.footballlocks.com/nfl_lines.shtml'))
-records_doc = Nokogiri::HTML(open('http://proxy.espn.com/nfl/standings'))
 
-raw_records = records_doc.css('.tablehead tr[class*="team-"]')
-records = {}
-raw_records.each { |r|
-  stats = r.css('td')
-  team = get_team(stats[0].inner_html)
-  records[team] = make_record(stats)
-}
-
+records = get_records()
 records.each { |t, r|
   puts "#{t}: #{r.win}-#{r.loss}-#{r.tie}"
 }
