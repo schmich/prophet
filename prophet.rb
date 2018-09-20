@@ -202,9 +202,9 @@ end
 def get_records
   # Try regular season first, then preseason.
   year = DateTime.now.year
-  records = get_records_by_season(year: year, season_type: 2)
+  records = get_records_by_season(year: year, season_type: 1)
   if records.empty?
-    records = get_records_by_season(year: year, season_type: 1)
+    records = get_records_by_season(year: year, season_type: 2)
   end
 
   records
