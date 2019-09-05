@@ -49,7 +49,7 @@ def get_team(name)
       :Atlanta
     when /carolina/i
       :Carolina
-    when /san.?francisco/i
+    when /san.?(francisco|francsico)/i
       :SanFrancisco
     when /arizona/i
       :Arizona
@@ -219,11 +219,8 @@ records.each { |t, r|
 
 puts
 
-tables = lines_doc.css('table[cols="5"]')
-tables = tables[tables.length - 2..tables.length]
-
-raw_games = tables.map { |t| t.css('tr') }.flatten
-raw_games = raw_games.find_all { |g| g.css('span').count <= 1 }.find_all { |g| g.css('td[width]').empty? }
+table = lines_doc.css('table[cols="5"]').first
+raw_games = table.css('tr').find_all { |g| g.css('span').count <= 1 }.find_all { |g| g.css('td[width]').empty? }
 
 games = []
 raw_games.each { |g|
