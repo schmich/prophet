@@ -200,6 +200,8 @@ def get_records_by_season(year:, season_type:)
 end
 
 def get_records
+  puts 'Fetch team records.'
+
   # Try regular season first, then preseason.
   year = DateTime.now.year
   records = get_records_by_season(year: year, season_type: 1)
@@ -210,6 +212,7 @@ def get_records
   records
 end
 
+puts 'Fetch lines.'
 lines_doc = Nokogiri::HTML(open('http://www.footballlocks.com/nfl_lines.shtml'))
 
 records = get_records()
@@ -219,8 +222,14 @@ records.each { |t, r|
 
 puts
 
-table = lines_doc.css('table[cols="5"]').first
-raw_games = table.css('tr').find_all { |g| g.css('span').count <= 1 }.find_all { |g| g.css('td[width]').empty? }
+tables = lines_doc.css('table[cols="5"]')[0..1]
+raw_games = tables.map { |table|
+  table.css('tr').find_all { |g|
+    g.css('span').count <= 1
+  }.find_all { |g|
+    g.css('td[width]').empty?
+  }
+}.flatten
 
 games = []
 raw_games.each { |g|
@@ -228,6 +237,8 @@ raw_games.each { |g|
   game = make_game(values)
   games << game
 }
+
+raise 'Too many games.' if games.count >= 17
 
 games.sort! { |p, q|
   game_sort(p, q, records)
