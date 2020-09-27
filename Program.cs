@@ -24,7 +24,7 @@ namespace Prophet
             var matches = response
                 .Events
                 .SelectMany(ev => ev.Competitions)
-                .Where(match => !match.Status.Type.IsCompleted)
+                .Where(match => match.Odds.Any())
                 .Select(match => new {
                     Odds = match.Odds.First(),
                     Teams = match.Competitors.Select(competitor => new {
@@ -76,21 +76,6 @@ namespace Prophet
 
         [JsonProperty("odds")]
         public List<Odds> Odds = new List<Odds>();
-
-        [JsonProperty("status")]
-        public Status Status;
-    }
-
-    class Status
-    {
-        [JsonProperty("type")]
-        public StatusType Type;
-    }
-
-    class StatusType
-    {
-        [JsonProperty("completed")]
-        public bool IsCompleted;
     }
 
     class Record
