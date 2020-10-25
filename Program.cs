@@ -32,14 +32,17 @@ namespace Prophet
                         Location = competitor.Team.Location,
                         Record = competitor.Record,
                         IsHome = competitor.IsHome,
-                        IsAway = competitor.IsAway
+                        IsAway = competitor.IsAway,
+                        IsFavorite = match.Odds.First().Favorite.TeamAbbreviation == competitor.Team.Abbreviation
                     }).ToArray()
                 })
                 .Select(match => new {
                     Odds = match.Odds,
                     Teams = match.Teams,
-                    Favorite = match.Teams.First(t => t.Abbreviation == match.Odds.Favorite.TeamAbbreviation),
-                    Underdog =  match.Teams.First(t => t.Abbreviation != match.Odds.Favorite.TeamAbbreviation)
+                    Favorite = match.Teams.First(t => t.IsFavorite),
+                    Underdog =  match.Teams.First(t => !t.IsFavorite),
+                    Home = match.Teams.First(t => t.IsHome),
+                    Away = match.Teams.First(t => t.IsAway)
                 })
                 .OrderByDescending(match => {
                     int pointsDelta = match.Favorite.Record.Points() - match.Underdog.Record.Points();
@@ -48,9 +51,26 @@ namespace Prophet
                 });
 
             foreach (var match in matches) {
-                var favorite = match.Favorite;
-                var underdog = match.Underdog;
-                Console.WriteLine($"{favorite.Location.PadLeft(30)} {favorite.Abbreviation.PadLeft(3)} ({favorite.Record})  {match.Odds.Favorite.Spread.ToString().PadLeft(5)}  ({underdog.Record}) {underdog.Abbreviation.PadRight(3)} {underdog.Location}");
+                var away = match.Away;
+                var home = match.Home;
+
+                if (away.IsFavorite) {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                }
+
+                Console.Write($"{away.Location.PadLeft(30)} {away.Abbreviation.PadLeft(3)} ({away.Record})");
+                Console.ResetColor();
+
+                Console.Write($"  {((home.IsFavorite ? -1 : 1) * match.Odds.Favorite.Spread).ToString().PadLeft(5)}  ");
+
+                if (home.IsFavorite) {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                }
+
+                Console.Write($" ({home.Record}) {home.Abbreviation.PadRight(3)} {home.Location}");
+                Console.ResetColor();
+
+                Console.WriteLine();
             }
         }
 
